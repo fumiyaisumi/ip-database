@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPデータベース — タスク管理</title>
+<style>
+  :root {
+    --primary: #7B4FFF;
+    --primary-bg: #F0EAFF;
+    --green: #00C48C;
+    --green-bg: #E6FBF4;
+    --yellow: #FFB800;
+    --yellow-bg: #FFF8E0;
+    --blue: #3B9EFF;
+    --blue-bg: #E8F3FF;
+    --red: #FF6B6B;
+    --red-bg: #FFF0F0;
+    --orange: #FF7A35;
+    --orange-bg: #FFF0E8;
+    --gray: #ABABCC;
+    --gray-bg: #F5F5FF;
+    --bg: #FAFAFA;
+    --card: #FFFFFF;
+    --border: #EBEBF5;
+    --text: #1A1A3E;
+    --text2: #6868A8;
+    --text3: #ABABCC;
+    --shadow: 0 4px 20px rgba(123,79,255,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; }
+
+  nav {
+    background: white; border-bottom: 2px solid var(--border);
+    padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 62px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .logo-icon { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), #FF6BB5); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: white; }
+  .logo-text { font-size: 17px; font-weight: 900; color: var(--text); }
+  .logo-text span { color: var(--primary); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .nav-link { color: var(--text2); text-decoration: none; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 100px; border: 2px solid var(--border); transition: all 0.2s; }
+  .nav-link:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
+  .reset-btn { background: var(--red-bg); color: var(--red); border: 2px solid #FFD0D0; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 100px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .reset-btn:hover { background: var(--red); color: white; }
+
+  /* HEADER */
+  .header { padding: 48px 32px 36px; background: linear-gradient(180deg, #F4EEFF 0%, #FAFAFA 100%); text-align: center; }
+  .header-badge { display: inline-flex; align-items: center; gap: 6px; background: white; border: 2px solid rgba(123,79,255,0.2); color: var(--primary); padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 700; margin-bottom: 18px; }
+  .header h1 { font-size: 38px; font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; }
+  .header h1 .grad { background: linear-gradient(135deg, var(--primary), #FF6BB5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .header-sub { font-size: 14px; color: var(--text2); font-weight: 500; margin-bottom: 28px; }
+
+  /* OVERALL PROGRESS */
+  .overall { max-width: 860px; margin: 0 auto; padding: 0 32px; }
+  .progress-card { background: white; border: 2px solid var(--border); border-radius: 20px; padding: 24px 28px; margin-bottom: 32px; box-shadow: var(--shadow); }
+  .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .progress-title { font-size: 15px; font-weight: 900; color: var(--text); }
+  .progress-pct { font-size: 28px; font-weight: 900; color: var(--primary); }
+  .progress-bar-bg { height: 10px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #FF6BB5); border-radius: 99px; transition: width 0.5s ease; }
+  .progress-counts { display: flex; gap: 20px; font-size: 12px; font-weight: 700; color: var(--text3); }
+  .progress-counts span { color: var(--text2); }
+  .progress-counts .done-count { color: var(--green); }
+
+  /* INFO BOX */
+  .info-section { max-width: 860px; margin: 0 auto; padding: 0 32px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .info-card { background: white; border: 2px solid var(--border); border-radius: 16px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .info-icon { font-size: 22px; margin-bottom: 8px; }
+  .info-title { font-size: 13px; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+  .info-body { font-size: 12px; color: var(--text2); font-weight: 500; line-height: 1.7; }
+  .info-tag { display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
+
+  /* PHASE */
+  .phases-wrap { max-width: 860px; margin: 0 auto; padding: 0 32px 80px; display: flex; flex-direction: column; gap: 20px; }
+  .phase-block { background: white; border: 2px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); }
+  .phase-head {
+    padding: 18px 24px; display: flex; align-items: center; gap: 14px;
+    cursor: pointer; user-select: none; transition: background 0.2s;
+  }
+  .phase-head:hover { background: var(--bg); }
+  .phase-emoji { font-size: 22px; flex-shrink: 0; }
+  .phase-head-info { flex: 1; }
+  .phase-label { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 3px; }
+  .phase-name { font-size: 16px; font-weight: 900; color: var(--text); }
+  .phase-period { font-size: 11px; color: var(--text3); font-weight: 700; margin-top: 2px; }
+  .phase-right { display: flex; align-items: center; gap: 12px; }
+  .phase-prog-ring { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+  .phase-prog-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .phase-prog-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; }
+  .phase-chevron { font-size: 16px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+  .phase-block.open .phase-chevron { transform: rotate(180deg); }
+  .phase-body { display: none; padding: 0 24px 20px; border-top: 2px solid var(--border); }
+  .phase-block.open .phase-body { display: block; }
+  .phase-desc-text { font-size: 13px; color: var(--text2); font-weight: 500; line-height: 1.7; padding: 16px 0 14px; }
+  .phase-progress-mini { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 16px; }
+  .phase-progress-mini-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+
+  /* TASK ITEMS */
+  .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border-radius: 12px; margin-bottom: 6px; transition: background 0.15s; cursor: pointer; }
+  .task-item:hover { background: var(--bg); }
+  .task-item.task-done { opacity: 0.55; }
+  .task-check {
+    width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--border);
+    flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; transition: all 0.2s; background: white;
+  }
+  .task-item.task-done .task-check { background: var(--green); border-color: var(--green); color: white; }
+  .task-content { flex: 1; }
+  .task-title { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.45; margin-bottom: 3px; }
+  .task-item.task-done .task-title { text-decoration: line-through; color: var(--text3); }
+  .task-note { font-size: 12px; color: var(--text2); font-weight: 500; line-height: 1.6; }
+  .task-item.task-done .task-note { color: var(--text3); }
+  .task-tags { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+  .task-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 5px; }
+
+  /* COMPLETED BANNER */
+  .phase-done-banner { background: var(--green-bg); border: 2px solid #A8F0D8; border-radius: 12px; padding: 12px 16px; text-align: center; font-size: 13px; font-weight: 700; color: var(--green); margin-top: 8px; display: none; }
+  .phase-block.all-done .phase-done-banner { display: block; }
+
+  @media (max-width: 680px) {
+    .info-section { grid-template-columns: 1fr; }
+    .header h1 { font-size: 28px; }
+    nav, .overall, .info-section, .phases-wrap { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="ip-database.html" class="logo">
+    <div class="logo-icon">IP</div>
+    <span class="logo-text">IP<span>データベース</span></span>
+  </a>
+  <div class="nav-right">
+    <a href="ip-database.html" class="nav-link">← サイトに戻る</a>
+    <button class="reset-btn" onclick="resetAll()">リセット</button>
+  </div>
+</nav>
+
+<div class="header">
+  <div class="header-badge">📋 タスク管理</div>
+  <h1>1週間で<span class="grad">MVP公開</span>する</h1>
+  <div class="header-sub">初心者でも迷わないように、やること・理由・手順をすべて書きました</div>
+</div>
+
+<div class="overall">
+  <div class="progress-card">
+    <div class="progress-header">
+      <div class="progress-title">🚀 全体の進捗</div>
+      <div class="progress-pct" id="totalPct">0%</div>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="totalBar" style="width:0%"></div>
+    </div>
+    <div class="progress-counts">
+      完了 <span class="done-count" id="doneCount">0</span>件 ／ 全 <span id="totalCount">0</span>件
+    </div>
+  </div>
+</div>
+
+<!-- INFO BOXES -->
+<div class="info-section">
+  <div class="info-card">
+    <div class="info-icon">💻</div>
+    <div class="info-title">このフォルダ（ローカル）の役割</div>
+    <div class="info-body">今あなたのPCの中にあるIPDBフォルダです。ここで作業・確認します。ブラウザで直接ファイルを開いて確認できます。インターネットには出ていないので他の人からは見えません。</div>
+    <span class="info-tag" style="background:var(--green-bg);color:var(--green)">✅ 開発・確認用として使う</span>
+  </div>
+  <div class="info-card">
+    <div class="info-icon">🌐</div>
+    <div class="info-title">本番環境（Vercel）の役割</div>
+    <div class="info-body">世界中からアクセスできる「公開用サーバー」です。<strong>無料</strong>で使えます。Day 4にGitHubと連携して設定します。設定後はファイルを更新するだけで自動で本番に反映されます。</div>
+    <span class="info-tag" style="background:var(--blue-bg);color:var(--blue)">📅 Day 4 に設定</span>
+  </div>
+</div>
+
+<div class="phases-wrap" id="phasesWrap"></div>
+
+<script>
+const PHASES = [
+  {
+    id: 'day0',
+    emoji: '✅',
+    label: 'Day 0(完了済み)',
+    name: 'デモサイト・スコア設計',
+    period: '完了',
+    color: '#00C48C',
+    bgColor: '#E6FBF4',
+    desc: 'すでに完成しています！HTMLデモ、スコアロジック設計、UIデザインがすべて揃っています。',
+    tasks: [
+      { id: 't00', title: 'HTMLデモサイト作成', note: 'ip-database.html — 検索・フィルター・IPカード表示', done: true, tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}] },
+      { id: 't01', title: 'IPパワースコアのロジック設計', note: 'X言及数×60% + Wikipedia PV×40% の計算式', done: true, tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}] },
+      { id: 't02', title: 'コラボ事例UIデザイン', note: 'コラボ事例カード・KPI表示', done: true, tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}] },
+      { id: 't03', title: '算出ロジック可視化セクション追加', note: 'サイト内に計算式・データソースを公開', done: true, tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}] },
+      { id: 't04', title: 'ロードマップ・タスク管理ページ作成', note: 'roadmap.html / tasks.html(このページ)', done: true, tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}] },
+    ]
+  },
+  {
+    id: 'day1',
+    emoji: '🗄️',
+    label: 'Day 1',
+    name: 'データ基盤セットアップ',
+    period: '所要時間：2〜3時間',
+    color: '#3B9EFF',
+    bgColor: '#E8F3FF',
+    desc: 'IPパワーのリアルデータを保存するデータベースを作ります。Supabaseという無料サービスを使います。アカウント登録からテーブル作成まで、コードを書かずにブラウザ上で完結します。',
+    tasks: [
+      {
+        id: 't10', title: 'Supabaseアカウントを作る', done: true,
+        note: '→ supabase.com にアクセス → 「Start your project」→ GitHubアカウントでサインアップ(GitHubがなければメールアドレスでOK)',
+        tags: [{label:'無料', color:'#00C48C', bg:'#E6FBF4'},{label:'10分', color:'#3B9EFF', bg:'#E8F3FF'}]
+      },
+      {
+        id: 't11', title: 'Supabaseでプロジェクト作成', done: true,
+        note: '「New project」→ プロジェクト名「ip-database」→ データベースパスワードを設定(メモしておく) → リージョンは「Northeast Asia (Tokyo)」を選択',
+        tags: [{label:'5分', color:'#3B9EFF', bg:'#E8F3FF'}]
+      },
+      {
+        id: 't12', title: 'IPテーブルを作成する', done: true,
+        note: 'Supabaseの「Table Editor」→「New table」→ テーブル名「ips」→ カラム追加：id(int) / name(text) / wiki_pv(int) / x_mentions(int) / ip_power(int) / updated_at(timestamp)',
+        tags: [{label:'15分', color:'#3B9EFF', bg:'#E8F3FF'},{label:'コード不要', color:'#7B4FFF', bg:'#F0EAFF'}]
+      },
+      {
+        id: 't13', title: 'サンプルIPデータを8件投入する', done: true,
+        note: '「SQL Editor」でINSERT文を実行。ポケモン〜すみっコぐらしまで8件投入済み。Supabase REST APIで正常取得を確認。',
+        tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'},{label:'動作確認', color:'#FFB800', bg:'#FFF8E0'}]
+      },
+    ]
+  },
+  {
+    id: 'day2',
+    emoji: '📖',
+    label: 'Day 2',
+    name: 'Wikipedia API実装',
+    period: '所要時間：2〜3時間',
+    color: '#7B4FFF',
+    bgColor: '#F0EAFF',
+    desc: 'WikipediaのAPIを使って、IPごとの月間閲覧数を自動取得するスクリプトを作ります。無料・登録不要で今日から使えます。Pythonを使いますが、コードはこちらで用意します。',
+    tasks: [
+      {
+        id: 't20', title: 'Pythonをインストールする(まだの場合)', done: true,
+        note: '→ python.org → 「Download Python」→ インストーラーを実行。インストール時に「Add Python to PATH」にチェックを入れることを忘れずに。',
+        tags: [{label:'無料', color:'#00C48C', bg:'#E6FBF4'},{label:'初回のみ', color:'#ABABCC', bg:'#F5F5FF'}]
+      },
+      {
+        id: 't21', title: 'Wikipedia APIスクリプトを入手・実行する', done: true,
+        note: 'update_ip_data.py を作成済み。pip install requests → python update_ip_data.py で実行。毎月末に実行して最新PVデータをSupabaseに送信。',
+        tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}]
+      },
+      {
+        id: 't22', title: 'SupabaseにWikipedia PVデータが入っていることを確認', done: true,
+        note: 'Supabaseの「Table Editor」でipsテーブルを確認済み。wiki_pvの列にデータが入っていることを確認。',
+        tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}]
+      },
+      {
+        id: 't23', title: 'IPを30件に拡張する', done: true,
+        note: 'ポケモン〜うたの☆プリンスさまっ♪まで全30件のIPをSupabaseに登録完了。ip-database.htmlのIP_VISUALも30件分のアイコン・カラーを設定済み。',
+        tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'}]
+      },
+    ]
+  },
+  {
+    id: 'day3',
+    emoji: '🐦',
+    label: 'Day 3',
+    name: 'X API申請 ＆ サイト動的化',
+    period: '所要時間：3〜4時間',
+    color: '#1DA1F2',
+    bgColor: '#E8F4FF',
+    desc: 'X APIの開発者登録(審査があるため早めに申請)と、サイトをSupabaseのデータから動的に表示する仕組みを作ります。',
+    tasks: [
+      {
+        id: 't30', title: 'X Developer Portalで開発者登録を申請する',
+        note: '→ developer.x.com → 「Sign up for Free Account」→ 利用目的を英語で入力。審査に1〜3日かかることがあります。今日申請して待つのが重要。',
+        tags: [{label:'早めに申請！', color:'#FF6B6B', bg:'#FFF0F0'},{label:'審査あり', color:'#ABABCC', bg:'#F5F5FF'}]
+      },
+      {
+        id: 't31', title: 'サイトをSupabaseから動的表示に切り替える', done: true,
+        note: 'ip-database.htmlにloadFromSupabase()関数を実装。SupabaseのREST APIを叩き、ipsテーブルのデータを自動でIPカードに反映するよう改修完了。',
+        tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'},{label:'Claudeが実施', color:'#7B4FFF', bg:'#F0EAFF'}]
+      },
+      {
+        id: 't32', title: 'ローカルで動作確認する', done: true,
+        note: 'Supabase REST APIに直接リクエストして8件のデータが正常に返ることを確認済み。ip-database.htmlを開くとDBから自動ロードされます。',
+        tags: [{label:'完了', color:'#00C48C', bg:'#E6FBF4'},{label:'API確認済み', color:'#FFB800', bg:'#FFF8E0'}]
+      },
+    ]
+  },
+  {
+    id: 'day4',
+    emoji: '🚀',
+    label: 'Day 4',
+    name: '本番公開(Vercel)',
+    period: '所要時間：2〜3時間',
+    color: '#FF7A35',
+    bgColor: '#FFF0E8',
+    desc: '今まで作ったサイトをインターネットに公開します。GitHubにファイルをアップして、Vercelと連携するだけ。難しそうに見えますが手順通りやれば30分で完成します。',
+    tasks: [
+      {
+        id: 't40', title: 'GitHubアカウントを作る(まだの場合)',
+        note: '→ github.com → 「Sign up」→ メールアドレス・ユーザー名・パスワードを設定。GitHubは「コードを保存・管理する場所」です。',
+        tags: [{label:'無料', color:'#00C48C', bg:'#E6FBF4'},{label:'初回のみ', color:'#ABABCC', bg:'#F5F5FF'}]
+      },
+      {
+        id: 't41', title: 'GitHubにリポジトリを作成してファイルをアップする',
+        note: '「New repository」→ 名前「ip-database」→ IPDBフォルダのHTMLファイルをドラッグ＆ドロップでアップロード。コマンドライン不要です。',
+        tags: [{label:'ドラッグ&ドロップでOK', color:'#3B9EFF', bg:'#E8F3FF'}]
+      },
+      {
+        id: 't42', title: 'Vercelアカウントを作りGitHubと連携する',
+        note: '→ vercel.com → 「Start Deploying」→ GitHubでサインイン → 「Import」で先ほどのリポジトリを選択 → 「Deploy」ボタンを押すだけ。',
+        tags: [{label:'無料', color:'#00C48C', bg:'#E6FBF4'},{label:'30分', color:'#3B9EFF', bg:'#E8F3FF'}]
+      },
+      {
+        id: 't43', title: '公開URLを確認する',
+        note: 'Vercelが自動で「xxx.vercel.app」というURLを発行します。そのURLにアクセスしてサイトが表示されればOK。これが本番URLです!',
+        tags: [{label:'公開!', color:'#FF7A35', bg:'#FFF0E8'}]
+      },
+    ]
+  },
+  {
+    id: 'day5',
+    emoji: '📊',
+    label: 'Day 5',
+    name: 'データ拡充・品質アップ',
+    period: '所要時間：3〜4時間',
+    color: '#FF6BB5',
+    bgColor: '#FFF0F7',
+    desc: '公開後すぐにコンテンツを充実させます。IPの件数を増やし、コラボ事例も追加。データの質がサービスの価値に直結します。',
+    tasks: [
+      {
+        id: 't50', title: 'IP数を50件に拡張する',
+        note: 'Wikipedia APIスクリプトにIPを追加して再実行。追加候補：進撃の巨人、ナルト、ドラゴンボール、セーラームーン、プリキュア、妖怪ウォッチ など',
+        tags: [{label:'コンテンツ', color:'#FF7A35', bg:'#FFF0E8'}]
+      },
+      {
+        id: 't51', title: 'コラボ事例を20件に拡充する',
+        note: 'Claudeに「IPコラボ事例をリサーチして追加して」と依頼。実在する事例をベースに追加していきます。',
+        tags: [{label:'Claudeに依頼', color:'#7B4FFF', bg:'#F0EAFF'}]
+      },
+      {
+        id: 't52', title: 'スマートフォン表示の確認・調整',
+        note: 'Chromeの開発者ツール(F12) → 「デバイスツールバー」でスマホ表示を確認。崩れている箇所をClaudeに修正依頼。',
+        tags: [{label:'UI改善', color:'#3B9EFF', bg:'#E8F3FF'}]
+      },
+    ]
+  },
+  {
+    id: 'day6',
+    emoji: '🐦',
+    label: 'Day 6',
+    name: 'X APIデータ追加(審査通過後)',
+    period: '審査通過次第',
+    color: '#1DA1F2',
+    bgColor: '#E8F4FF',
+    desc: 'Day 3に申請したX APIの審査が通ったら、メンション数データを追加します。これでIPパワーが本来のロジック(X×60% + Wiki×40%)で計算されるようになります。',
+    tasks: [
+      {
+        id: 't60', title: 'X APIのアクセストークンを取得する',
+        note: 'developer.x.comの「Dashboard」→ アプリの「Keys and tokens」→ 「Bearer Token」をコピーしてメモ。',
+        tags: [{label:'審査通過後', color:'#1DA1F2', bg:'#E8F4FF'}]
+      },
+      {
+        id: 't61', title: 'X APIメンション数取得スクリプトを実装する',
+        note: 'Claudeに「X APIでIPごとの月間メンション数を取得してSupabaseに保存するスクリプトを作って」と依頼。',
+        tags: [{label:'Claudeに依頼', color:'#7B4FFF', bg:'#F0EAFF'},{label:'Basic $100/月', color:'#FF6B6B', bg:'#FFF0F0'}]
+      },
+      {
+        id: 't62', title: 'IPパワーをフルロジックで再計算する',
+        note: 'X言及×60% + Wikipedia PV×40% の計算式でIPパワーを全件更新。スコアが実データになります。',
+        tags: [{label:'スコア更新', color:'#00C48C', bg:'#E6FBF4'}]
+      },
+    ]
+  },
+  {
+    id: 'day7',
+    emoji: '🎉',
+    label: 'Day 7',
+    name: '仕上げ・告知',
+    period: '所要時間：2〜3時間',
+    color: '#00C48C',
+    bgColor: '#E6FBF4',
+    desc: '最終確認をして、サービスを世の中に知らせます。まずは身近な人や関係者への告知から始めましょう。',
+    tasks: [
+      {
+        id: 't70', title: '全ページの最終動作確認',
+        note: '検索・フィルター・詳細モーダル・コラボ事例・算出ロジックページをすべて確認。おかしな箇所はClaudeに修正依頼。',
+        tags: [{label:'品質確認', color:'#FFB800', bg:'#FFF8E0'}]
+      },
+      {
+        id: 't71', title: '独自ドメインの取得(任意)',
+        note: '「ip-database.jp」などのドメインを取得するとプロらしくなります。お名前.com・ムームードメインなどで年1,000円〜。Vercelの設定画面から連携できます。',
+        tags: [{label:'任意', color:'#ABABCC', bg:'#F5F5FF'},{label:'年1,000円〜', color:'#FFB800', bg:'#FFF8E0'}]
+      },
+      {
+        id: 't72', title: '関係者・ターゲットユーザーへの告知',
+        note: 'まずはIPビジネス関係者・広告代理店・マーケター知人に直接URLを送りましょう。フィードバックをもらうのが最優先。',
+        tags: [{label:'公開!', color:'#00C48C', bg:'#E6FBF4'}]
+      },
+      {
+        id: 't73', title: '月次自動更新のCronジョブを設定する',
+        note: 'GitHub Actionsで毎月1日にWikipedia/X APIを叩いてスコアを自動更新する設定。Claudeに依頼すればファイル1つで完成します。',
+        tags: [{label:'自動化', color:'#7B4FFF', bg:'#F0EAFF'}]
+      },
+    ]
+  },
+];
+
+// localStorage
+const STORAGE_KEY = 'ipdb_tasks_v1';
+function loadDone() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+}
+function saveDone(done) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
+}
+
+let doneState = loadDone();
+
+// initialize pre-done tasks
+PHASES.forEach(ph => ph.tasks.forEach(t => {
+  if (t.done && doneState[t.id] === undefined) doneState[t.id] = true;
+}));
+saveDone(doneState);
+
+function toggleTask(id) {
+  doneState[id] = !doneState[id];
+  saveDone(doneState);
+  render();
+}
+
+function resetAll() {
+  if (!confirm('進捗をリセットしますか？(Day 0の完了タスクは除く)')) return;
+  PHASES.forEach(ph => ph.tasks.forEach(t => {
+    if (!t.done) doneState[t.id] = false;
+  }));
+  saveDone(doneState);
+  render();
+}
+
+function drawRing(pct, color, size = 48, stroke = 4) {
+  const r = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#EBEBF5" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function render() {
+  let totalDone = 0, totalAll = 0;
+  const wrap = document.getElementById('phasesWrap');
+  const openStates = {};
+  wrap.querySelectorAll('.phase-block').forEach(el => {
+    openStates[el.dataset.id] = el.classList.contains('open');
+  });
+
+  wrap.innerHTML = '';
+
+  PHASES.forEach(ph => {
+    const pDone = ph.tasks.filter(t => doneState[t.id]).length;
+    const pAll = ph.tasks.length;
+    const pct = pAll ? Math.round((pDone / pAll) * 100) : 0;
+    const allDone = pDone === pAll;
+    totalDone += pDone; totalAll += pAll;
+
+    const isOpen = openStates[ph.id] !== undefined ? openStates[ph.id] : (ph.id === 'day0' || ph.id === 'day1');
+
+    const tasksHTML = ph.tasks.map(t => {
+      const done = !!doneState[t.id];
+      const tagsHTML = (t.tags || []).map(tg =>
+        `<span class="task-tag" style="background:${tg.bg};color:${tg.color}">${tg.label}</span>`
+      ).join('');
+      return `<div class="task-item ${done ? 'task-done' : ''}" onclick="toggleTask('${t.id}')">
+        <div class="task-check">${done ? '✓' : ''}</div>
+        <div class="task-content">
+          <div class="task-title">${t.title}</div>
+          ${t.note ? `<div class="task-note">${t.note}</div>` : ''}
+          ${tagsHTML ? `<div class="task-tags">${tagsHTML}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    const block = document.createElement('div');
+    block.className = `phase-block${isOpen ? ' open' : ''}${allDone ? ' all-done' : ''}`;
+    block.dataset.id = ph.id;
+    block.innerHTML = `
+      <div class="phase-head" onclick="togglePhase('${ph.id}')">
+        <div class="phase-emoji">${ph.emoji}</div>
+        <div class="phase-head-info">
+          <div class="phase-label" style="color:${ph.color}">${ph.label}</div>
+          <div class="phase-name">${ph.name}</div>
+          <div class="phase-period">${ph.period}</div>
+        </div>
+        <div class="phase-right">
+          <div class="phase-prog-ring">
+            ${drawRing(pct, ph.color)}
+            <div class="phase-prog-num" style="color:${ph.color}">${pct}%</div>
+          </div>
+          <div class="phase-chevron">▼</div>
+        </div>
+      </div>
+      <div class="phase-body">
+        <div class="phase-desc-text">${ph.desc}</div>
+        <div class="phase-progress-mini">
+          <div class="phase-progress-mini-fill" style="width:${pct}%;background:${ph.color}"></div>
+        </div>
+        ${tasksHTML}
+        <div class="phase-done-banner">🎉 このフェーズ完了!次のフェーズに進みましょう</div>
+      </div>`;
+    wrap.appendChild(block);
+  });
+
+  // overall
+  const pct = totalAll ? Math.round((totalDone / totalAll) * 100) : 0;
+  document.getElementById('totalPct').textContent = pct + '%';
+  document.getElementById('totalBar').style.width = pct + '%';
+  document.getElementById('doneCount').textContent = totalDone;
+  document.getElementById('totalCount').textContent = totalAll;
+}
+
+function togglePhase(id) {
+  const el = document.querySelector(`.phase-block[data-id="${id}"]`);
+  if (el) el.classList.toggle('open');
+}
+
+render();
+</script>
+</body>
+</html>
