@@ -1,0 +1,10 @@
+# SQLファイル（APIキーが含まれる可能性があるため除外）
+*.sql
+update_ip_data.py
+
+# OS生成ファイル
+.DS_Store
+Thumbs.db
+
+# ログ
+*.log
