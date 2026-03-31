@@ -122,28 +122,27 @@
     box-shadow: var(--shadow);
   }
   .ip-card:hover { border-color: var(--primary-light); box-shadow: var(--shadow-hover); }
-  .ip-card.expanded { border-color: var(--primary); }
 
-  .card-compact {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 16px; cursor: pointer; user-select: none;
-  }
+  .card-compact { padding: 14px 16px 10px; }
+
+  /* 1行目: アイコン + IP名 */
+  .card-row1 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .card-icon-sm {
-    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
-  .card-main { flex: 1; min-width: 0; }
-  .card-name { font-size: 15px; font-weight: 900; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-name { font-size: 15px; font-weight: 900; color: var(--text); flex: 1; min-width: 0; }
   .card-genre { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
-  .card-genre span { font-size: 10px; background: var(--primary-bg); color: var(--primary); padding: 2px 8px; border-radius: 100px; font-weight: 700; }
-  .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-  .card-score { font-size: 17px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
-  .card-badges { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-  .rank-badge { font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 6px; }
+  .card-genre span { font-size: 10px; background: var(--primary-bg); color: var(--primary); padding: 2px 7px; border-radius: 100px; font-weight: 700; white-space: nowrap; }
 
+  /* 2行目: スコア + ランク */
+  .card-row2 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .card-score { font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+  .rank-badge { font-size: 11px; font-weight: 900; padding: 3px 10px; border-radius: 7px; white-space: nowrap; }
 
-
+  /* 3行目: タグ群 */
+  .card-row3 { display: flex; gap: 5px; flex-wrap: wrap; min-height: 22px; margin-bottom: 2px; }
 
   /* ===== CARD METRICS ===== */
   .card-compact { cursor: default; }
@@ -681,23 +680,25 @@ function renderCard(ip){
   const snsFollower=(ip.snsX>0)?`<div class="card-sns-badge"><span>\uD835\uDD4F</span>${fmtFollower(ip.snsX)}</div>`:'';
   return `<div class="ip-card" id="card-${ip.id}" data-categories='${JSON.stringify(ip.categories)}' data-power="${ip.power}" data-collab="${ip.collabCount}" data-trend="${ip.sns}">
   <div class="card-compact">
-    <div class="card-icon-sm" style="background:#2A3A58;color:white">${ip.icon}</div>
-    <div class="card-main">
-      <div class="card-name">${ip.name}</div>
-      <div class="card-genre">${ip.genre.map(g=>`<span>${g}</span>`).join('')}</div>
+    <div class="card-row1">
+      <div class="card-icon-sm" style="background:#2A3A58;color:white">${ip.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="card-name">${ip.name}</div>
+        <div class="card-genre">${ip.genre.map(g=>`<span>${g}</span>`).join('')}</div>
+      </div>
     </div>
-    <div class="card-right">
+    <div class="card-row2">
       <div class="card-score">${fmt(ip.power)}</div>
-      <div class="card-badges"><span class="rank-badge" style="background:${r.bg};color:${r.text}">${r.label}</span>${tagHot}${tagTrend}${tagSafe}</div>
+      <span class="rank-badge" style="background:${r.bg};color:${r.text}">${r.label}</span>
     </div>
+    <div class="card-row3">${tagHot}${tagTrend}${tagSafe}</div>
   </div>
   <div class="card-metrics-grid">${metricsHTML}${snsFollower}</div>
   <div class="card-detail-row">
     <a class="detail-link-btn" href="#/ip/${ip.id}">\u8A73\u7D30\u3092\u898B\u308B \u2192</a>
   </div>
-</div>`;
+</div>`
 }
-
 
 function renderCollab(c){
   return `<div class="collab-card">
