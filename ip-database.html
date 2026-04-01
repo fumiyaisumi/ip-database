@@ -17,8 +17,8 @@
   :root {
     --bg:        #F4F4F6;
     --surface:   #FFFFFF;
-    --surface2:  #F0F0F4;
-    --border:    #E2E2E8;
+    --surface2:  #EAEAF0;
+    --border:    #D0D0DA;
     --text:      #111827;
     --text2:     #6B7280;
     --text3:     #9CA3AF;
@@ -30,7 +30,7 @@
     --primary-bg: rgba(79,142,247,0.08);
     --green:     #3A9E7E;
     --green-bg:  rgba(58,158,126,0.08);
-    --shadow:    0 1px 3px rgba(0,0,0,0.08);
+    --shadow:    0 1px 4px rgba(0,0,0,0.10);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--bg); color:var(--text); font-family:'Inter',-apple-system,'Hiragino Kaku Gothic ProN',sans-serif; min-height:100vh; }
@@ -73,7 +73,7 @@
 
   /* CARD */
   .ip-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; transition:border-color 0.15s; }
-  .ip-card:hover { border-color:#C0C0CC; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+  .ip-card:hover { border-color:#ADADBE; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
   .card-compact { padding:16px; }
   .card-row1 { display:flex; align-items:flex-start; gap:9px; margin-bottom:12px; }
   .card-icon-sm { width:80px; height:48px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px; background:var(--surface2); overflow:hidden; padding:4px; }
